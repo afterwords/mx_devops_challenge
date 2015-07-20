@@ -1,0 +1,29 @@
+global
+    log 127.0.0.1 local0 notice
+    maxconn 2000
+    user haproxy
+    group haproxy
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    retries 3
+    option redispatch
+    timeout connect  5000
+    timeout client  10000
+    timeout server  10000
+
+listen webservers 0.0.0.0:80
+    mode http
+    stats enable
+    stats uri /stats
+    stats realm Strictly\ Private
+    stats auth vagrant:vagrant
+    balance roundrobin
+    option httpclose
+    option forwardfor
+    server web-1 192.168.12.11:8080 check
+    server web-2 192.168.12.12:8080 check
+    server web-3 192.168.12.13:8080 check

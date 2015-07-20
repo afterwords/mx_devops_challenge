@@ -1,0 +1,43 @@
+- hosts: webservers
+  remote_user: vagrant
+  sudo: yes
+
+  tasks:
+  - name: test connection
+    ping:
+
+  - apt: name=ruby state=latest update_cache=yes
+
+  - name: Create app directory
+    file: path=/usr/local/hello_world state=directory
+
+  - name: Move application file to directory
+    copy: src=../hello_world.rb dest=/usr/local/hello_world
+
+  - name: Move service config
+    copy: src=../hello_world.conf dest=/etc/init
+    notify: start hello_world
+
+  handlers:
+  - name: start hello_world
+    service: name=hello_world state=started enabled=yes
+
+- hosts: loadbalancers
+  remote_user: vagrant
+  sudo: yes
+  tasks:
+  - name: test connection
+    ping:
+  - apt: name=haproxy state=latest update_cache=yes
+  - name: Update haproxy to enable start with service
+    replace: dest=/etc/default/haproxy regexp='ENABLED=0' replace='ENABLED=1'
+  - name: Configure the haproxy cnf file with hosts
+    template: src=../haproxy.cfg.j2 dest=/etc/haproxy/haproxy.cfg
+    notify: restart haproxy
+
+  handlers:
+  - name: start haproxy
+    service: name=haproxy state=started enabled=yes
+
+  - name: restart haproxy
+    service: name=haproxy state=restarted
