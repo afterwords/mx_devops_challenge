@@ -1,3 +1,4 @@
+
 global
     log 127.0.0.1 local0 notice
     maxconn 2000
@@ -24,6 +25,6 @@ listen webservers 0.0.0.0:80
     balance roundrobin
     option httpclose
     option forwardfor
-    server web-1 192.168.12.11:8080 check
-    server web-2 192.168.12.12:8080 check
-    server web-3 192.168.12.13:8080 check
+{% for host in groups['webservers'] %}
+    server {{ host }} {{ hostvars[host]['ansible_eth1']['ipv4']['address'] }}:8080 check
+{% endfor %}

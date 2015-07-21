@@ -70,6 +70,8 @@ Vagrant.configure(2) do |config|
   #   sudo apt-get install -y apache2
   # SHELL
 
+  $webservernames = Array.new
+
   config.vm.define "loadbal" do |loadbal|
     loadbal.vm.hostname = "loadbal"
     loadbal.vm.network "private_network", ip: "192.168.12.10"
@@ -81,6 +83,20 @@ Vagrant.configure(2) do |config|
     config.vm.define "web-#{i}" do |web|
       web.vm.hostname = "web-#{i}"
       web.vm.network "private_network", ip: "192.168.12.#{10+i}"
+      $webservernames << "web-#{i}"
+
+      if i == N
+        config.vm.provision :ansible do |ansible|
+          ansible.limit = 'all'
+          ansible.playbook = "playbooks/configure_nodes.yml"
+          ansible.sudo = true
+          ansible.groups = {
+            "loadbalancers" => ["loadbal"],
+            "webservers" => $webservernames
+          }
+        end
+      end
+
     end
   end
 
